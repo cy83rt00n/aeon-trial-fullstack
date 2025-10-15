@@ -27,6 +27,101 @@ class User {
         }
     }
 
+
+    private static function user_create($data)
+    {
+        try {
+            $data['phone'] = preg_replace('~[^0-9]~', '', $data['phone']);
+            $data['email'] = strtolower($data['email']);
+            $data['plots'] = preg_replace('~[^0-9,]~', '', $data['plots']);
+
+            $query = "INSERT INTO users (first_name, last_name, phone, email, plot_id) " .
+                "VALUES (?,?,?,?,?)";
+
+            $stmnt = DB::connect()->prepare($query);
+            $stmnt->bindValue(1, $data['first_name']);
+            $stmnt->bindValue(2, $data['last_name']);
+            $stmnt->bindValue(3, phone_formatting($data['phone']));
+            $stmnt->bindValue(4, $data['email']);
+            $stmnt->bindValue(5, $data['plots']);
+            $stmnt->execute();
+        } catch (PDOException $ex) {
+            die(json_encode(["error" => $ex->errorInfo]));
+        } catch (Exception $ex) {
+            die(json_encode(["error" => $ex->getMessage()]));
+        }
+    }
+
+    private static function user_read($user_id)
+    {
+        try {
+            $query = "SELECT user_id, first_name, last_name, phone, email, access, plot_id " .
+                "FROM users " .
+                "WHERE user_id=? " .
+                "LIMIT 1";
+            $stmnt = DB::connect()->prepare($query);
+            $stmnt->bindValue(1, $user_id);
+            $stmnt->execute();
+
+            if ($row = $stmnt->fetch()) {
+                return [
+                    'id' => (int) $row['user_id'],
+                    'first_name' => $row['first_name'],
+                    'last_name' => $row['last_name'],
+                    'phone' => $row['phone'],
+                    'email' => $row['email'],
+                    'plots' => $row['plot_id'],
+                    'access' => (int) $row['access']
+                ];
+            } else {
+                return [
+                    'id' => 0,
+                    'first_name' => '',
+                    'last_name' => '',
+                    'phone' => '',
+                    'email' => '',
+                    'plots' => '',
+                    'access' => 0
+                ];
+            }
+        } catch (PDOException $ex) {
+            die(json_encode(["error" => $ex->errorInfo]));
+        } catch (Exception $ex) {
+            die(json_encode(["error" => $ex->getMessage()]));
+        }
+    }
+
+    private static function user_update($data)
+    {
+        try {
+            $data['phone'] = preg_replace('~[^0-9]~', '', $data['phone']);
+            $data['email'] = strtolower($data['email']);
+            $data['plots'] = preg_replace('~[^0-9,]~', '', $data['plots']);
+
+            $query = "UPDATE users " .
+                "SET first_name=?, last_name=?, phone=?, email=?, plot_id=? " .
+                "WHERE user_id=?";
+            $stmnt = DB::connect()->prepare($query);
+            $stmnt->bindValue(1, $data['first_name']);
+            $stmnt->bindValue(2, $data['last_name']);
+            $stmnt->bindValue(3, $data['phone']);
+            $stmnt->bindValue(4, $data['email']);
+            $stmnt->bindValue(5, $data['plots']);
+            $stmnt->bindValue(6, $data['user_id']);
+            $stmnt->execute();
+        } catch (PDOException $ex) {
+            die(json_encode(["error"=>$ex->errorInfo]));
+        } catch (Exception $ex) {
+            die(json_encode(["error"=>$ex->getMessage()]));
+        }
+    }
+
+    private static function user_delete ($user_id) {
+        $query = "DELETE FROM users WHERE user_id=?";
+        $stmnt = DB::connect()->prepare($query);
+        $stmnt->bindValue(1,$user_id, PDO::PARAM_INT);
+        $stmnt->execute();
+    }
     public static function users_list_plots($number) {
         // vars
         $items = [];
