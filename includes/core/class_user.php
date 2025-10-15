@@ -194,6 +194,13 @@ class User {
             die(json_encode(["error" => $ex->getMessage()]));
         }
     }
+
+    public static function users_search($data) {
+        $info = self::users_list($data);
+        HTML::assign('users', $info['items']);
+        return ['html' => HTML::fetch('./partials/users_table.html'), 'paginator' => $info['paginator']];
+    }
+
     public static function edit_window_read($data) {
         $user_id = isset($data['user_id']) && is_numeric($data['user_id']) ? $data['user_id'] : 0;
         HTML::assign('user', self::user_read($user_id));
@@ -217,4 +224,5 @@ class User {
         HTML::assign('users', $users_list['items']);
         return ['html' => HTML::fetch('./partials/users_table.html'), 'paginator' => $users_list['paginator']];
     }
+
 }
