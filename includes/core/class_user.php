@@ -143,4 +143,55 @@ class User {
         return $items;
     }
 
+    public static function users_list($data = [])
+    {
+        try {
+            $search = isset($data['search']) && trim($data['search']) ? trim($data['search']) : '';
+            $offset = isset($data['offset']) && is_numeric($data['offset']) ? $data['offset'] : 0;
+            $limit = 20;
+            $items = [];
+            $where = null;
+
+            if ($search) {
+                $where[] = "first_name LIKE :search";
+                $where[] = "last_name LIKE :search";
+                $where[] = "CONCAT(first_name, ' ', last_name) LIKE :search";
+                $where[] = "phone LIKE :search";
+                $where[] = "email LIKE :search";
+            }
+
+            $where = $where ? "WHERE " . implode(" OR ", $where) : "";
+            $query = "SELECT * FROM users " . $where . " LIMIT :offset,:limit";
+            $stmnt = DB::connect()->prepare($query);
+            if ($where) $stmnt->bindValue(':search', '%' . $search . '%', PDO::PARAM_STR);
+            $stmnt->bindValue(':offset', $offset, PDO::PARAM_INT);
+            $stmnt->bindValue(':limit', $limit, PDO::PARAM_INT);
+            $stmnt->execute();
+            while ($row = $stmnt->fetch()) {
+                $items[] = [
+                    'id' => $row['user_id'],
+                    'plot_id' => $row['plot_id'],
+                    'first_name' => $row['first_name'],
+                    'last_name' => $row['last_name'],
+                    'phone' => phone_formatting($row['phone']),
+                    'email' => $row['email'],
+                    'last_login' => ($row['last_login']) ? date('Y/m/d', $row['last_login']) : 0
+                ];
+            }
+
+            $query = "SELECT count(*) as users_count FROM users " . $where;
+            $stmnt = DB::connect()->prepare($query);
+            if ($where) $stmnt->bindValue(':search', '%' . $search . '%', PDO::PARAM_STR);
+            $stmnt->execute();
+            $count = ($row = $stmnt->fetch()) ? $row['users_count'] : 0;
+            $url = 'users?';
+            paginator($count, $offset, $limit, $url, $paginator);
+            // output
+            return ['items' => $items, 'paginator' => $paginator];
+        } catch (PDOException $ex) {
+            die(json_encode(["error" => $ex->errorInfo]));
+        } catch (Exception $ex) {
+            die(json_encode(["error" => $ex->getMessage()]));
+        }
+    }
 }
