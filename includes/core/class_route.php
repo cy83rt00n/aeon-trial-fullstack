@@ -47,6 +47,7 @@ class Route {
         if ($path == 'auth') $result = controller_auth($act, $data);
         else if ($path == 'plot') $result = controller_plot($act, $data);
         else if ($path == 'search') $result = controller_search($act, $data);
+        else if ($path == 'users') $result = controller_user($act, $data);
         else $result = [];
         // output
         echo json_encode($result, true);

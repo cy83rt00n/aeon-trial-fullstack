@@ -157,6 +157,76 @@ let common = {
             html('table', result.html);
         });
     },
+
+    // users
+
+    user_edit_read: (user_id, e) => {
+        // actions
+        cancel_event(e);
+        common.menu_popup_hide_all('all');
+        // vars
+        let data = {user_id: user_id ?? 0};
+        let location = {dpt: 'users', act: 'edit_window_read'};
+        // call
+        request({location: location, data: data}, (result) => {
+            common.modal_show(400, result.html);
+        });
+    },
+
+    user_edit_update: (user_id, e) => {
+        // actions
+        cancel_event(e);
+        common.menu_popup_hide_all('all');
+        // vars
+        const params = new URLSearchParams(window.location.search);
+        const necessaryFieldsError = 'Заполните обязательные поля';
+        try {
+            let data = {
+                user_id: user_id ?? 0,
+                first_name: gv('first_name') || (function () { throw new Error(necessaryFieldsError) }()),
+                last_name: gv('last_name') || (function () { throw new Error(necessaryFieldsError) }()),
+                phone: gv('phone') || (function () { throw new Error(necessaryFieldsError) }()),
+                email: gv('email') || (function () { throw new Error(necessaryFieldsError) }()),
+                plots: gv('plots'),
+                offset: params.get('offset')
+            };
+            let location = { dpt: 'users', act: 'edit_window_update' };
+            // call
+            request({ location: location, data: data }, (result) => {
+                for (el of document.getElementsByClassName('input_group_modal')) {
+                    el.children[1].classList.remove('error');
+                }
+                document.getElementById('modal_errors').classList.remove('active');
+                common.modal_hide();
+                html('table', result.html);
+            });
+        } catch (error) {
+            for (el of document.getElementsByClassName('input_group_modal')) {
+                if (el.children[1].getAttribute('required') == undefined) break;
+                el.children[1].classList.add('error');
+            }
+            document.getElementById('modal_errors').children[0].innerText = error;
+            document.getElementById('modal_errors').classList.add('active');
+        }
+    },
+
+    user_edit_delete: (user_id, e) => {
+        // actions
+        cancel_event(e);
+        common.menu_popup_hide_all('all');
+        // vars
+        const params = new URLSearchParams(window.location.search);
+        let data = {
+            user_id: user_id,
+            offset: params.get('offset')
+        };
+        let location = {dpt: 'users', act: 'edit_window_delete'};
+        // call
+        request({location: location, data: data}, (result) => {
+            common.modal_hide();
+            html('table', result.html);
+        });
+    },
 }
 
 add_event(document, 'DOMContentLoaded', common.init);

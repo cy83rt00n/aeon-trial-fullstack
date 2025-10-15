@@ -194,4 +194,27 @@ class User {
             die(json_encode(["error" => $ex->getMessage()]));
         }
     }
+    public static function edit_window_read($data) {
+        $user_id = isset($data['user_id']) && is_numeric($data['user_id']) ? $data['user_id'] : 0;
+        HTML::assign('user', self::user_read($user_id));
+        return ['html' => HTML::fetch('./partials/user_edit.html')];
+    }
+
+    public static function edit_window_update($data)
+    {
+        $user_id = isset($data['user_id']) && is_numeric($data['user_id']) ? $data['user_id'] : 0;
+        ($user_id < 1) ? self::user_create($data) : self::user_update($data);
+        $users_list = self::users_list($data);
+        HTML::assign('users', $users_list['items']);
+        return ['html' => HTML::fetch('./partials/users_table.html'), 'paginator' => $users_list['paginator']];
+    }
+
+    public static function edit_window_delete($data) {
+        $user_id = isset($data['user_id']) && is_numeric($data['user_id']) ? $data['user_id'] : 0;
+        if($user_id < 1) throw new Exception('Error: user id can\'t be less than 1' );
+        self::user_delete($user_id);
+        $users_list = self::users_list($data);
+        HTML::assign('users', $users_list['items']);
+        return ['html' => HTML::fetch('./partials/users_table.html'), 'paginator' => $users_list['paginator']];
+    }
 }
